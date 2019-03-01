@@ -62,6 +62,7 @@ namespace Mapsui.UI.Uwp
             ManipulationMode = ManipulationModes.Scale | ManipulationModes.TranslateX | ManipulationModes.TranslateY | ManipulationModes.Rotate;
             ManipulationStarted += OnManipulationStarted;
             ManipulationDelta += OnManipulationDelta;
+            ManipulationCompleted += OnManipulationCompleted;
 
             ManipulationInertiaStarting += OnManipulationInertiaStarting;
 
@@ -70,7 +71,7 @@ namespace Mapsui.UI.Uwp
 
             var orientationSensor = SimpleOrientationSensor.GetDefault();
             if (orientationSensor != null)
-                orientationSensor.OrientationChanged += (sender, args) => RunOnUIThread(Refresh);
+                orientationSensor.OrientationChanged += (sender, args) => Refresh();
         }
 
 
@@ -141,11 +142,10 @@ namespace Mapsui.UI.Uwp
             
             e.Handled = true;
 
-            RefreshGraphics();
-            RefreshData();
+            Refresh();
         }
         
-        public void RefreshGraphics()
+        protected void RefreshGraphicsOnUI()
         {
             RunOnUIThread(() => _canvas?.Invalidate());
         }
@@ -220,6 +220,12 @@ namespace Mapsui.UI.Uwp
             _viewport.Transform(center, previousCenter, radius / previousRadius, rotationDelta);
             RefreshGraphics();
             e.Handled = true;
+        }
+        
+        private void OnManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            Refresh();
         }
 
         public float PixelDensity => (float)DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;

@@ -245,7 +245,7 @@ namespace Mapsui.UI.Android
                 motionEvent.GetY(0) - view.Top).ToMapsui();
         }
 
-        public void RefreshGraphics()
+        protected void RefreshGraphicsOnUI()
         {
             RunOnUIThread(RefreshGraphicsWithTryCatch);
         }

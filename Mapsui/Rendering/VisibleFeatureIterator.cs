@@ -26,7 +26,7 @@ namespace Mapsui.Rendering
         private static void IterateLayer(IReadOnlyViewport viewport, ILayer layer,
             Action<IReadOnlyViewport, IStyle, IFeature, float> callback)
         {
-            var features = layer.GetFeaturesInView(viewport.Extent, viewport.Resolution).ToList();
+            var features = layer.GetFeaturesInView(viewport.Extent, viewport.Resolution);
 
             var layerStyles = ToArray(layer);
             foreach (var layerStyle in layerStyles)

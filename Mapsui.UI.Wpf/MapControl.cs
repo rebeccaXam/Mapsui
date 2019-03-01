@@ -157,7 +157,7 @@ namespace Mapsui.UI.Wpf
 
         public event EventHandler<FeatureInfoEventArgs> FeatureInfo; // todo: Remove and add sample for alternative
 
-        public void RefreshGraphics()
+        public void RefreshGraphicsOnUI()
         {
             RunOnUIThread(InvalidateCanvas);
         }

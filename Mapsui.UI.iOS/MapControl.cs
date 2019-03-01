@@ -175,8 +175,8 @@ namespace Mapsui.UI.iOS
         {
             DispatchQueue.MainQueue.DispatchAsync(action);
         }
-        
-        public void RefreshGraphics()
+
+        protected void RefreshGraphicsOnUI()
         {
             RunOnUIThread(() =>
             {

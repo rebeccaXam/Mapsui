@@ -11,6 +11,8 @@ using Mapsui.Rendering;
 using Mapsui.Rendering.Skia;
 using Mapsui.Widgets;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Threading;
 
 #if __ANDROID__
 namespace Mapsui.UI.Android
@@ -27,6 +29,10 @@ namespace Mapsui.UI.Wpf
     public partial class MapControl : INotifyPropertyChanged
     {
         private Map _map;
+
+        private ManualResetEvent _waitRefreshData = new ManualResetEvent(true); 
+        private System.Timers.Timer _aTimer;
+
         private double _unSnapRotationDegrees;
 
         /// <summary>
@@ -174,43 +180,42 @@ namespace Mapsui.UI.Wpf
         /// Refresh data of the map and than repaint it
         /// </summary>
         public void Refresh()
-        {
+        {   
             RefreshData();
             RefreshGraphics();
         }
 
         private void MapDataChanged(object sender, DataChangedEventArgs e)
         {
-            RunOnUIThread(() =>
+
+            try
             {
-                try
+                if (e == null)
                 {
-                    if (e == null)
-                    {
-                        Logger.Log(LogLevel.Warning, "Unexpected error: DataChangedEventArgs can not be null");
-                    }
-                    else if (e.Cancelled)
-                    {
-                        Logger.Log(LogLevel.Warning, "Fetching data was cancelled", e.Error);
-                    }
-                    else if (e.Error is WebException)
-                    {
-                        Logger.Log(LogLevel.Warning, "A WebException occurred. Do you have internet?", e.Error);
-                    }
-                    else if (e.Error != null)
-                    {
-                        Logger.Log(LogLevel.Warning, "An error occurred while fetching data", e.Error);
-                    }
-                    else // no problems
-                    {
-                        RefreshGraphics();
-                    }
+                    Logger.Log(LogLevel.Warning, "Unexpected error: DataChangedEventArgs can not be null");
                 }
-                catch (Exception exception)
+                else if (e.Cancelled)
                 {
-                    Logger.Log(LogLevel.Warning, $"Unexpected exception in {nameof(MapDataChanged)}", exception);
+                    Logger.Log(LogLevel.Warning, "Fetching data was cancelled", e.Error);
                 }
-            });
+                else if (e.Error is WebException)
+                {
+                    Logger.Log(LogLevel.Warning, "A WebException occurred. Do you have internet?", e.Error);
+                }
+                else if (e.Error != null)
+                {
+                    Logger.Log(LogLevel.Warning, "An error occurred while fetching data", e.Error);
+                }
+                else // no problems
+                {
+                    RefreshGraphics();
+                }
+            }
+            catch (Exception exception)
+            {
+                Logger.Log(LogLevel.Warning, $"Unexpected exception in {nameof(MapDataChanged)}", exception);
+            }
+
         }
         // ReSharper disable RedundantNameQualifier - needed for iOS for disambiguation
 
@@ -312,7 +317,40 @@ namespace Mapsui.UI.Wpf
         /// </summary>
         public void RefreshData()
         {
-            _map?.RefreshData(Viewport.Extent, Viewport.Resolution, true);
+            _waitRefreshData.Reset();
+            Task.Run(() =>
+            {
+                try
+                {
+                    _map?.RefreshData(Viewport.Extent, Viewport.Resolution, true);
+                }
+                finally
+                {
+                    _waitRefreshData.Set();
+                }
+            });
+        }
+
+        public void RefreshGraphics()
+        {
+            if (_aTimer == null)
+            {
+                _aTimer = new System.Timers.Timer(40);
+                _aTimer.Elapsed += OnTimedEvent;
+                _aTimer.AutoReset = false;
+            }
+
+            Task.Run(() =>
+            {
+                _waitRefreshData.WaitOne();
+                _aTimer.Enabled = true;
+            });
+        }
+
+        private void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            _aTimer.Enabled = false;
+            RefreshGraphicsOnUI();
         }
 
         private void OnInfo(MapInfoEventArgs mapInfoEventArgs)

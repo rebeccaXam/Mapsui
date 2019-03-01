@@ -92,8 +92,6 @@ namespace Mapsui.Rendering.Skia
         {
             try
             {
-                layers = layers.ToList();
-
                 VisibleFeatureIterator.IterateLayers(viewport, layers, (v, l, s, o) => { RenderFeature(canvas, v, l, s, o); });
 
                 RemovedUnusedBitmapsFromCache();

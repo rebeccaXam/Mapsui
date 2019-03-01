@@ -195,7 +195,7 @@ namespace Mapsui
         /// </summary>
         public void AbortFetch()
         {
-            foreach (var layer in _layers.ToList())
+            foreach (var layer in _layers)
             {
                 if (layer is IAsyncDataFetcher asyncLayer) asyncLayer.AbortFetch();
             }
@@ -214,7 +214,7 @@ namespace Mapsui
 
         public void RefreshData(BoundingBox extent, double resolution, bool majorChange)
         {
-            foreach (var layer in _layers.ToList())
+            foreach (var layer in _layers)
             {
                 layer.RefreshData(extent, resolution, majorChange);
             }
